@@ -18388,7 +18388,7 @@ Object.defineProperty(exports, "event", {get: function() { return d3Selection.ev
 // Remember to use the Read-Search-Ask method if you get stuck.
 
 document.addEventListener("DOMContentLoaded", function() {
-	console.log("Document loaded");
+	//console.log(+"39" + 1);
 	const req = new XMLHttpRequest();
 	req.open(
 		"GET",
@@ -18422,6 +18422,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		};
 		const parseMinSec = d3.timeParse("%M:%S");
 		const parseYear = d3.timeParse("%Y");
+		let minMax = json
+			.map((obj) => +obj.Time.substring(0, 2))
+			.sort((a, b) => a - b);
+		//console.log(minMax);
 		const x = d3
 			.scaleTime()
 			.domain([
@@ -18432,8 +18436,11 @@ document.addEventListener("DOMContentLoaded", function() {
 		const y = d3
 			.scaleTime()
 			.domain([
-				d3.min(json, (d) => parseMinSec(d.Time)),
-				d3.max(json, (d) => parseMinSec(d.Time))
+				// d3.min(json, (d) => parseMinSec(+d.Time.substring(0, 2) - 1 + ":00")),
+				// d3.min(json, (d) => parseMinSec(`${minMax[0] - 1}:00`)),
+				// d3.max(json, (d) => parseMinSec(`${minMax[minMax.length - 1] + 1}:00`))
+				parseMinSec(`${minMax[0]}:00`),
+				parseMinSec(`${minMax[minMax.length - 1] + 1}:00`)
 			])
 			.range([0, diaAt.height]);
 		const yA = d3
@@ -18445,11 +18452,11 @@ document.addEventListener("DOMContentLoaded", function() {
 				d3.max(json, (d) => parseMinSec(d.Time))
 			])
 			.range([diaAt.height, 0]);
-		console.log(parseMinSec(json[0].Time));
-		console.log(parseMinSec(json[1].Time));
-		console.log(parseMinSec(json[2].Time));
-		console.log(parseMinSec(json[3].Time));
-		console.log(parseMinSec(json[4].Time));
+		// console.log(parseMinSec(json[0].Time));
+		// console.log(parseMinSec(json[1].Time));
+		// console.log(parseMinSec(json[2].Time));
+		// console.log(parseMinSec(json[3].Time));
+		// console.log(parseMinSec(json[4].Time));
 
 		//Axis
 		const yAxis = d3.axisLeft(y).tickFormat(d3.timeFormat("%M:%S"));
