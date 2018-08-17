@@ -34,6 +34,7 @@
 // Remember to use the Read-Search-Ask method if you get stuck.
 
 document.addEventListener("DOMContentLoaded", function() {
+	console.log("Document loaded");
 	const req = new XMLHttpRequest();
 	req.open(
 		"GET",
@@ -46,139 +47,82 @@ document.addEventListener("DOMContentLoaded", function() {
 		console.log(json);
 		/*----------------D3 Code here-----------------*/
 		const d3 = require("d3");
-		// 	units = json.description.match(/(units: )(.*)/i)[2],
-		// 	//Padding
-		// 	pd = { top: 50, bottom: 50, right: 30, left: 70 },
-		// 	//Bar width
-		// 	bw = 3,
-		// 	//Diagram
-		// 	dh = 500, //height
-		// 	dw = json.data.length * bw, //width
-		// 	//SVG
-		// 	sw = pd.left + dw + pd.right, //width
-		// 	sh = pd.top + dh + pd.bottom, //height
-		// 	//Scales
-		// 	//			parseTime = d3.timeParse("%Y-%m-%d"),
-		// 	parseTime = d3.timeParse("%Y-%m-%d"),
-		// 	x = d3
-		// 		.scaleTime()
-		// 		.domain([
-		// 			// d3.min(json.data, (d) => parseTime(d[0])),
-		// 			// d3.max(json.data, (d) => parseTime(d[0]))
-		// 			d3.min(json.data, (d) => parseTime(d[0])),
-		// 			d3.max(json.data, (d) => parseTime(d[0]))
-		// 		])
-		// 		.range([0, dw]),
-		// 	y = d3
-		// 		.scaleLinear()
-		// 		.domain([0, d3.max(json.data, (d) => d[1])])
-		// 		.range([0, dh]),
-		// 	yA = d3
-		// 		.scaleLinear()
-		// 		.domain([0, d3.max(json.data, (d) => d[1])])
-		// 		.range([dh, 0]);
-		// console.log(x(parseTime("2015-01-01")));
-		// //Axis
-		// const yAxis = d3.axisLeft(yA);
-		// const xAxis = d3.axisBottom(x);
+		const pd = { top: 50, bottom: 50, right: 30, left: 70 };
+		/*-----------------Attributes------------------*/
+		const diaAt = {
+			height: 500,
+			width: 700
+		};
+		const svgAt = {
+			height: pd.top + diaAt.height + pd.bottom,
+			width: pd.left + diaAt.width + pd.right,
+			id: "svg-canvas"
+		};
+		const yAxsAt = {
+			id: "y-axis",
+			transform: "translate(" + pd.left + ", " + pd.top + ")"
+		};
+		const xAxsAt = {
+			id: "x-axis",
+			transform: "translate(" + pd.left + ", " + (pd.top + diaAt.height) + ")"
+		};
+		const parseMinSec = d3.timeParse("%M:%S");
+		const parseYear = d3.timeParse("%Y");
+		const x = d3
+			.scaleTime()
+			.domain([
+				d3.min(json, (d) => parseYear(d.Year - 1)),
+				d3.max(json, (d) => parseYear(d.Year + 1))
+			])
+			.range([0, diaAt.width]);
+		const y = d3
+			.scaleTime()
+			.domain([
+				d3.min(json, (d) => parseMinSec(d.Time)),
+				d3.max(json, (d) => parseMinSec(d.Time))
+			])
+			.range([0, diaAt.height]);
+		const yA = d3
+			.scaleTime()
+			.domain([
+				// d3.min(json, (d) => d.Time),
+				// d3.max(json, (d) => d.Time)
+				d3.min(json, (d) => parseMinSec(d.Time)),
+				d3.max(json, (d) => parseMinSec(d.Time))
+			])
+			.range([diaAt.height, 0]);
+		console.log(parseMinSec(json[0].Time));
+		console.log(parseMinSec(json[1].Time));
+		console.log(parseMinSec(json[2].Time));
+		console.log(parseMinSec(json[3].Time));
+		console.log(parseMinSec(json[4].Time));
 
-		// const svg = d3
-		// 	.select("main")
-		// 	.append("svg")
-		// 	.attr("width", sw)
-		// 	.attr("height", sh);
-		// let tooltipDiv = d3
-		// 	.select("body")
-		// 	.append("div")
-		// 	.attr("class", "tooltip")
-		// 	.style("opacity", 0);
-		// const tooltipParse = (arr) => {
-		// 	let qtr = "";
-		// 	switch (arr[0].substring(5, 7)) {
-		// 		case "01":
-		// 			qtr = "Q1";
-		// 			break;
-		// 		case "04":
-		// 			qtr = "Q2";
-		// 			break;
-		// 		case "07":
-		// 			qtr = "Q3";
-		// 			break;
-		// 		case "10":
-		// 			qtr = "Q4";
-		// 			break;
-		// 		default:
-		// 			break;
-		// 	}
-		// 	return `${qtr} ${arr[0].substring(0, 4)}</br>$${d3.format(",")(
-		// 		arr[1]
-		// 	)} Billion`;
-		// };
-		// // 			var element = d3.select('.elementClassName').node();
-		// // element.getBoundingClientRect().width;
-		// const title = svg
-		// 	.append("text")
-		// 	.attr("id", "title")
-		// 	.text(json.name + ", " + json.frequency + ".");
-		// /*---Centering title in data and top padding---*/
-		// title
-		// 	.attr(
-		// 		"x",
-		// 		pd.left + dw / 2 - title.node().getBoundingClientRect().width / 2
-		// 	)
-		// 	.attr("y", (pd.top + title.node().getBoundingClientRect().height) / 2);
-		// /*---------Generating bars-----------*/
-		// svg
-		// 	.selectAll("rect")
-		// 	.data(json.data)
-		// 	.enter()
-		// 	.append("rect")
-		// 	.attr("data-date", (d) => d[0])
-		// 	.attr("data-gdp", (d) => d[1])
-		// 	.attr("class", "bar")
-		// 	.attr("fill", "#0f72b8")
-		// 	//	.attr("x", (d, i) => i * bw + pd.left)
-		// 	.attr("x", (d) => x(parseTime(d[0])) + pd.left)
-		// 	.attr("y", (d) => dh - y(d[1]) + pd.top)
-		// 	.attr("width", bw)
-		// 	.attr("height", (d) => y(d[1]))
-		// 	.on("mouseover", (d) => {
-		// 		tooltipDiv
-		// 			.attr("id", "tooltip")
-		// 			.attr("data-date", d[0])
-		// 			.transition()
-		// 			.duration(100)
-		// 			.style("opacity", 0.9);
-		// 		tooltipDiv
-		// 			.html(tooltipParse(d))
-		// 			.style("left", d3.event.pageX + pd.right / 2 + "px")
-		// 			.style("top", d3.event.pageY - pd.bottom + "px");
-		// 	})
-		// 	.on("mouseout", (d) => {
-		// 		tooltipDiv
-		// 			.transition()
-		// 			.duration(300)
-		// 			.style("opacity", 0);
-		// 	});
-		// /*---------Generating axiss-----------*/
-		// svg
-		// 	.append("g")
-		// 	.call(yAxis)
-		// 	.attr("id", "y-axis")
-		// 	.attr("transform", "translate(" + pd.left + ", " + pd.top + ")");
-		// //Y-axis label alignment
-		// const label = svg
-		// 	.append("text")
-		// 	.attr("id", "label")
-		// 	.attr("transform", "rotate(-90)")
-		// 	.text(units);
-		// label
-		// 	.attr("x", -(label.node().getBoundingClientRect().height + pd.top))
-		// 	.attr("y", label.node().getBoundingClientRect().width + pd.left);
-		// svg
-		// 	.append("g")
-		// 	.call(xAxis)
-		// 	.attr("id", "x-axis")
-		// 	.attr("transform", "translate(" + pd.left + ", " + (pd.top + dh) + ")");
+		//Axis
+		const yAxis = d3.axisLeft(y).tickFormat(d3.timeFormat("%M:%S"));
+		const xAxis = d3.axisBottom(x);
+
+		//	console.log(xAxsAt.transform);
+
+		const svg = d3
+			.select("main")
+			.append("svg")
+			.attr("id", svgAt.id)
+			.attr("height", svgAt.height)
+			.attr("width", svgAt.width);
+
+		/*---------Generating axis`s-----------*/
+		svg
+			.append("g")
+			.call(yAxis)
+			.attr("id", yAxsAt.id)
+			.attr("transform", yAxsAt.transform);
+		//	.tickFormat("%M:%S");
+		//	.tickFormat(d3.timeFormat("%M:%S"));
+
+		svg
+			.append("g")
+			.call(xAxis)
+			.attr("id", xAxsAt.id)
+			.attr("transform", xAxsAt.transform);
 	};
 });
