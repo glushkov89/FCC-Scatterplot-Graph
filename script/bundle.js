@@ -18397,7 +18397,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	req.send();
 	req.onload = function() {
 		const json = JSON.parse(req.responseText);
-		console.log(json);
 		/*----------------D3 Code here-----------------*/
 		const d3 = require("d3");
 		const mg = { top: 50, bottom: 50, right: 30, left: 70 };
@@ -18411,19 +18410,13 @@ document.addEventListener("DOMContentLoaded", function() {
 			width: mg.left + diaAt.width + mg.right,
 			id: "svg-canvas"
 		};
-		// const yAxsAt = {
-		// 	id: "y-axis",
-		// 	transform: "translate(" + mg.left + ", " + mg.top + ")"
-		// };
-		// const xAxsAt = {
-		// 	id: "x-axis",
-		// 	transform: "translate(" + mg.left + ", " + (mg.top + diaAt.height) + ")"
-		// };
+
 		const parseMinSec = d3.timeParse("%M:%S");
 		const parseYear = d3.timeParse("%Y");
 		let minMax = json
 			.map((obj) => +obj.Time.substring(0, 2))
 			.sort((a, b) => a - b);
+		/*Domains are widened so that the dots dont end up overlaying axis*/
 		const x = d3
 			.scaleTime()
 			.domain([
@@ -18438,13 +18431,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				parseMinSec(`${minMax[minMax.length - 1] + 1}:00`)
 			])
 			.range([0, diaAt.height]);
-		const yA = d3
-			.scaleTime()
-			.domain([
-				d3.min(json, (d) => parseMinSec(d.Time)),
-				d3.max(json, (d) => parseMinSec(d.Time))
-			])
-			.range([diaAt.height, 0]);
 
 		//Axis
 		const yAxis = d3.axisLeft(y).tickFormat(d3.timeFormat("%M:%S"));
@@ -18456,13 +18442,36 @@ document.addEventListener("DOMContentLoaded", function() {
 			.attr("id", svgAt.id)
 			.attr("height", svgAt.height)
 			.attr("width", svgAt.width);
+
 		const diag = svg
 			.append("g")
 			.attr("height", diaAt.height)
 			.attr("width", diaAt.width)
 			.attr("transform", `translate(${mg.left},${mg.top})`);
+
+		let tooltipDiv = d3
+			.select("body")
+			.append("div")
+			.attr("id", "tooltip")
+			.attr("class", "mytooltip")
+			.style("opacity", 0);
+
+		const title = svg
+			.append("text")
+			.attr("id", "title")
+			.text("Doping in Professional Bicycle Racing");
+
+		/*---Centering title in data and top margin---*/
+		title
+			.attr(
+				"x",
+				mg.left +
+					diaAt.width / 2 -
+					title.node().getBoundingClientRect().width / 2
+			)
+			.attr("y", (mg.top + title.node().getBoundingClientRect().height) / 2);
 		/*---------Generating axis`s-----------*/
-		diag
+		const myYaxs = diag
 			.append("g")
 			.call(yAxis)
 			.attr("id", "y-axis");
@@ -18471,6 +18480,93 @@ document.addEventListener("DOMContentLoaded", function() {
 			.call(xAxis)
 			.attr("id", "x-axis")
 			.attr("transform", `translate(0,${diaAt.height})`);
+		/*Label for y-axis*/
+		const yLabel = diag
+			.append("text")
+			.attr("id", "label")
+			.attr("transform", "rotate(-90)")
+			.text("Time in minutes");
+		const yLbWid = myYaxs.node().getBoundingClientRect().width;
+		yLabel
+			.attr(
+				"x",
+				-(yLabel.node().getBoundingClientRect().height + diaAt.height) / 2
+			)
+			.attr("y", -yLbWid - (mg.left - yLbWid) / 4);
+		/*Circles*/
+		const color = d3.scaleOrdinal(d3.schemeCategory10).domain([0, false, true]);
+
+		const tooltipParse = (obj) =>
+			`${obj.Name} (${obj.Nationality})</br>${obj.Year} Place ${obj.Place} in ${
+				obj.Time
+			} min</br>${obj.Doping}`;
+		diag
+			.selectAll("rect")
+			.data(json)
+			.enter()
+			.append("circle")
+			.attr("data-xvalue", (d) => parseYear(d.Year))
+			.attr("data-yvalue", (d) => parseMinSec(d.Time))
+			.attr("class", "dot")
+			.attr("fill", (d) => color(d.Doping === ""))
+			.style("stroke", "black")
+			.attr("cx", (d) => x(parseYear(d.Year)))
+			.attr("cy", (d) => y(parseMinSec(d.Time)))
+			.attr("r", (d) => (d.Doping ? 4 : 8))
+			.on("mouseover", (d) => {
+				tooltipDiv
+					.attr("data-year", parseYear(d.Year))
+					.transition()
+					.duration(100)
+					.style("opacity", 0.9);
+				tooltipDiv
+					.html(tooltipParse(d))
+					.style("left", d3.event.pageX + mg.right / 2 + "px")
+					.style("top", d3.event.pageY - mg.bottom + "px");
+			})
+			.on("mouseout", () => {
+				tooltipDiv
+					.transition()
+					.duration(300)
+					.style("opacity", 0);
+			});
+		/*Legend*/
+		const lmg = { t: 2, b: 2, r: 2, l: 2 };
+		const lrec = { h: 15, w: 15 };
+		const legend = diag.append("svg").attr("id", "legend");
+		const legItems = legend
+			.selectAll(".legend-item")
+			.data(color.domain().slice(1))
+			.enter()
+			.append("g")
+			.attr("class", "legend-item")
+			.attr(
+				"transform",
+				(d, i) => `translate(0,${(lmg.t + lrec.h + lmg.b) * i})`
+			);
+
+		legItems
+			.append("rect")
+			.attr("width", lrec.w)
+			.attr("height", lrec.h)
+			.style("fill", color)
+			.style("stroke", "black");
+
+		legItems
+			.append("text")
+			.text(
+				(d) => (d ? "No doping allegations" : "Riders with doping allegations")
+			)
+			.attr("x", lrec.w + lmg.r)
+			.attr("y", lrec.h - 3);
+		const legDim = {
+			h: legItems.node().getBoundingClientRect().height,
+			w: legItems.node().getBoundingClientRect().width
+		};
+		legend.attr(
+			"transform",
+			`translate(${(diaAt.width - legDim.w) / 2},${lmg.t})`
+		);
 	};
 });
 

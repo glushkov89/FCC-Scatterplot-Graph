@@ -21,8 +21,12 @@ body {
     font-size: smaller;
 }
 
+#legend {
+    font-size: smaller;
+}
+
 .dot:hover {
-    fill: beige;
+    opacity: 0.7;
 }
 
 div.mytooltip {
