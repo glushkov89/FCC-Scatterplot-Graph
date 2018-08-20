@@ -34,7 +34,6 @@
 // Remember to use the Read-Search-Ask method if you get stuck.
 
 document.addEventListener("DOMContentLoaded", function() {
-	//console.log(+"39" + 1);
 	const req = new XMLHttpRequest();
 	req.open(
 		"GET",
@@ -47,31 +46,30 @@ document.addEventListener("DOMContentLoaded", function() {
 		console.log(json);
 		/*----------------D3 Code here-----------------*/
 		const d3 = require("d3");
-		const pd = { top: 50, bottom: 50, right: 30, left: 70 };
+		const mg = { top: 50, bottom: 50, right: 30, left: 70 };
 		/*-----------------Attributes------------------*/
 		const diaAt = {
 			height: 500,
 			width: 700
 		};
 		const svgAt = {
-			height: pd.top + diaAt.height + pd.bottom,
-			width: pd.left + diaAt.width + pd.right,
+			height: mg.top + diaAt.height + mg.bottom,
+			width: mg.left + diaAt.width + mg.right,
 			id: "svg-canvas"
 		};
-		const yAxsAt = {
-			id: "y-axis",
-			transform: "translate(" + pd.left + ", " + pd.top + ")"
-		};
-		const xAxsAt = {
-			id: "x-axis",
-			transform: "translate(" + pd.left + ", " + (pd.top + diaAt.height) + ")"
-		};
+		// const yAxsAt = {
+		// 	id: "y-axis",
+		// 	transform: "translate(" + mg.left + ", " + mg.top + ")"
+		// };
+		// const xAxsAt = {
+		// 	id: "x-axis",
+		// 	transform: "translate(" + mg.left + ", " + (mg.top + diaAt.height) + ")"
+		// };
 		const parseMinSec = d3.timeParse("%M:%S");
 		const parseYear = d3.timeParse("%Y");
 		let minMax = json
 			.map((obj) => +obj.Time.substring(0, 2))
 			.sort((a, b) => a - b);
-		//console.log(minMax);
 		const x = d3
 			.scaleTime()
 			.domain([
@@ -82,9 +80,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		const y = d3
 			.scaleTime()
 			.domain([
-				// d3.min(json, (d) => parseMinSec(+d.Time.substring(0, 2) - 1 + ":00")),
-				// d3.min(json, (d) => parseMinSec(`${minMax[0] - 1}:00`)),
-				// d3.max(json, (d) => parseMinSec(`${minMax[minMax.length - 1] + 1}:00`))
 				parseMinSec(`${minMax[0]}:00`),
 				parseMinSec(`${minMax[minMax.length - 1] + 1}:00`)
 			])
@@ -92,23 +87,14 @@ document.addEventListener("DOMContentLoaded", function() {
 		const yA = d3
 			.scaleTime()
 			.domain([
-				// d3.min(json, (d) => d.Time),
-				// d3.max(json, (d) => d.Time)
 				d3.min(json, (d) => parseMinSec(d.Time)),
 				d3.max(json, (d) => parseMinSec(d.Time))
 			])
 			.range([diaAt.height, 0]);
-		// console.log(parseMinSec(json[0].Time));
-		// console.log(parseMinSec(json[1].Time));
-		// console.log(parseMinSec(json[2].Time));
-		// console.log(parseMinSec(json[3].Time));
-		// console.log(parseMinSec(json[4].Time));
 
 		//Axis
 		const yAxis = d3.axisLeft(y).tickFormat(d3.timeFormat("%M:%S"));
 		const xAxis = d3.axisBottom(x);
-
-		//	console.log(xAxsAt.transform);
 
 		const svg = d3
 			.select("main")
@@ -116,20 +102,20 @@ document.addEventListener("DOMContentLoaded", function() {
 			.attr("id", svgAt.id)
 			.attr("height", svgAt.height)
 			.attr("width", svgAt.width);
-
+		const diag = svg
+			.append("g")
+			.attr("height", diaAt.height)
+			.attr("width", diaAt.width)
+			.attr("transform", `translate(${mg.left},${mg.top})`);
 		/*---------Generating axis`s-----------*/
-		svg
+		diag
 			.append("g")
 			.call(yAxis)
-			.attr("id", yAxsAt.id)
-			.attr("transform", yAxsAt.transform);
-		//	.tickFormat("%M:%S");
-		//	.tickFormat(d3.timeFormat("%M:%S"));
-
-		svg
+			.attr("id", "y-axis");
+		diag
 			.append("g")
 			.call(xAxis)
-			.attr("id", xAxsAt.id)
-			.attr("transform", xAxsAt.transform);
+			.attr("id", "x-axis")
+			.attr("transform", `translate(0,${diaAt.height})`);
 	};
 });
